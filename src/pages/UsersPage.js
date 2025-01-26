@@ -1,83 +1,70 @@
 import React, { useState } from 'react';
 import useStore from '../store/main';
+import '../App.css';
 
-const UsersPage = () => {
-    const { users, currentUser, sendMessage, conversations } = useStore();
-    const [message, setMessage] = useState('');
+function UsersPage() {
+    const { users, currentUser, sendMessage } = useStore();
     const [selectedUser, setSelectedUser] = useState(null);
+    const [message, setMessage] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleSelectUser = (user) => {
-        if (user.id !== currentUser.id) {
-            setSelectedUser(user);
-        }
-    };
 
+    const filteredUsers = users.filter(user => user.username !== currentUser?.username);
 
     const handleSendMessage = () => {
-        if (message.trim()) {
-            sendMessage(selectedUser.id, message);
+        if (selectedUser && message.trim()) {
+            sendMessage(selectedUser, message);
             setMessage('');
+            setIsModalOpen(false);
         }
-    };
-
-
-    const getMessagesForUser = (userId) => {
-
-        const conversationKey = `${Math.min(currentUser.id, userId)}-${Math.max(currentUser.id, userId)}`;
-        return conversations[conversationKey] || [];
     };
 
     return (
-        <div>
-            <h2>Registered Users</h2>
-            <div className="users-container">
-                {users.map((user) => (
-                    <div
-                        key={user.id}
-                        className="user-card"
-                        onClick={() => handleSelectUser(user)}
-                    >
-                        <img
-                            className="profile-img"
-                            src={user.profileImage || "https://cdn-icons-png.flaticon.com/512/10337/10337609.png"}
-                            alt={`${user.username}'s profile`}
-                        />
-                        <div className="user-info">
-                            <h3>{user.username}</h3>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {selectedUser && (
-                <div className="message-section">
-                    <h3>Send Message to {selectedUser.username}</h3>
-
-
-                    <div className="messages-display">
-                        {getMessagesForUser(selectedUser.id).map((msg, index) => (
-                            <div key={index} className={msg.senderId === currentUser.id ? "sent-message" : "received-message"}>
-                                <strong>{msg.senderId === currentUser.id ? 'You' : selectedUser.username}: </strong>
-                                <p>{msg.text}</p>
+        <div className="users-container">
+            <h1 className="users-title">Registered Users</h1>
+            {filteredUsers.length === 0 ? (
+                <p>No other users registered yet.</p>
+            ) : (
+                <div className="users-list">
+                    {filteredUsers.map((user) => (
+                        <div
+                            key={user.username}
+                            className="user-card"
+                            onClick={() => {
+                                setSelectedUser(user);
+                                setIsModalOpen(true);
+                            }}
+                        >
+                            <img
+                                src={user.profileImage}
+                                alt={user.username}
+                                className="user-profile-image"
+                            />
+                            <div className="user-info">
+                                <p><strong>Username:</strong> {user.username}</p>
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
 
-                    <textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        rows="4"
-                        cols="50"
-                    />
-                    <div className="message-actions">
+            {isModalOpen && selectedUser && (
+                <div className="modal">
+                    <div className="modal-content">
+                        <h2>Send Message to {selectedUser.username}</h2>
+                        <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Write your message..."
+                        />
                         <button onClick={handleSendMessage}>Send</button>
+                        <button onClick={() => setIsModalOpen(false)}>Close</button>
                     </div>
                 </div>
             )}
         </div>
     );
-};
+}
 
 export default UsersPage;

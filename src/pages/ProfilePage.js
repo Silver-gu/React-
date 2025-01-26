@@ -1,137 +1,88 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import useStore from '../store/main';
 import '../App.css';
 
-const ProfilePage = () => {
-    const currentUser = useStore((state) => state.currentUser);
-    const updateProfileImage = useStore((state) => state.updateProfileImage);
-    const deleteAccount = useStore((state) => state.deleteAccount);
-    const [showImageModal, setShowImageModal] = useState(false);
+function ProfilePage() {
+    const { currentUser, updateUser, logout, users } = useStore();
     const [newImageUrl, setNewImageUrl] = useState('');
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (currentUser) {
-            const savedImageUrl = localStorage.getItem(`profileImage-${currentUser.username}`);
-            if (savedImageUrl && savedImageUrl !== currentUser.profileImage) {
-                updateProfileImage(savedImageUrl);
-            }
-        }
-    }, [currentUser, updateProfileImage]);
 
     if (!currentUser) {
-        return <p>Please log in to view your profile.</p>;
+
+        return <div>Please log in first.</div>;
     }
 
-    const handleImageUrlChange = (event) => {
-        setNewImageUrl(event.target.value);
-    };
+    const handleImageChange = () => {
+        if (newImageUrl) {
 
-    const handleSaveImage = () => {
-        if (newImageUrl === currentUser.profileImage) {
-            setShowImageModal(false);
-            return;
+            const updatedUser = { ...currentUser, profileImage: newImageUrl };
+            updateUser(updatedUser);
+
+            setNewImageUrl('');
+            setIsEditing(false);
         }
-
-        updateProfileImage(newImageUrl);
-
-        localStorage.setItem(`profileImage-${currentUser.username}`, newImageUrl);
-
-        setShowImageModal(false);
     };
 
     const handleCancel = () => {
-        setShowImageModal(false);
+
+        setNewImageUrl('');
+        setIsEditing(false);
     };
 
     const handleDeleteAccount = () => {
-        setShowDeleteModal(true);
-    };
+        if (password === currentUser.password) {
 
-    const handlePasswordChange = (event) => {
-        setPassword(event.target.value);
-        setError('');
-    };
 
-    const handleConfirmDelete = () => {
-        if (password !== currentUser.password) {
-            setError('Incorrect password. Please try again.');
-            return;
-        }
 
-        if (window.confirm('Are you sure you want to delete your account? ')) {
             localStorage.removeItem('currentUser');
-            localStorage.removeItem(`profileImage-${currentUser.username}`);
 
-            deleteAccount();
-            window.location.href = '/login';
+
+            const updatedUsers = users.filter(user => user.username !== currentUser.username);
+            localStorage.setItem('users', JSON.stringify(updatedUsers));
+
+
+            logout();
+
         }
-    };
-
-    const handleCancelDelete = () => {
-        setShowDeleteModal(false);
+        setIsDeleting(false);
         setPassword('');
-        setError('');
     };
 
     return (
-        <div>
-            <h2>{currentUser.username}'s Profile</h2>
-            <div className="d-flex j-center gap20">
-                <div>
-                    <img
-                        className="profileImg"
-                        src={currentUser.profileImage || "https://cdn-icons-png.flaticon.com/512/10337/10337609.png"}
-                        alt="User Profile"
-                    />
-                </div>
-                <div className="mt5 d-flex direction-col gap10">
+        <div className="profile-container">
+            <h1 className="profile-title">Profile Page</h1>
+            <div className="profile-details">
+
+                <img
+                    src={currentUser.profileImage}
+                    alt="Profile"
+                    className="profile-image"
+                />
+                <div className="profile-info ">
                     <p>Username: {currentUser.username}</p>
-                    <button className="registerButton" onClick={() => setShowImageModal(true)}>Update Image</button>
-                    <button onClick={handleDeleteAccount} className="deleteAccountButton">Delete Account</button>
-                    {showImageModal && (
-                        <div className="modal">
-                            <div className="modal-content">
-                                <h3>Update Image</h3>
-                                <input
-                                    type="url"
-                                    placeholder="Enter image URL"
-                                    value={newImageUrl}
-                                    onChange={handleImageUrlChange}
-                                />
-                                <div className="d-flex gap10">
-                                    <button onClick={handleSaveImage}>Save</button>
-                                    <button onClick={handleCancel}>Cancel</button>
-                                </div>
-                            </div>
+                    <button onClick={() => setIsEditing(true)}>Change Image</button>
+                    {isEditing && (
+                        <div>
+                            <input type="text" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="Enter new image URL"/>
+                            <button onClick={handleImageChange}>Update Image</button>
+                            <button onClick={handleCancel} className="cancel-button">Cancel</button>
                         </div>
                     )}
-
-                    {showDeleteModal && (
-                        <div className="modal">
-                            <div className="modal-content">
-                                <h3>Confirm Deletion</h3>
-                                <p>Please enter your password to confirm account deletion.</p>
-                                <input
-                                    type="password"
-                                    placeholder="Enter your password"
-                                    value={password}
-                                    onChange={handlePasswordChange}
-                                />
-                                {error && <p style={{ color: 'red' }}>{error}</p>}
-                                <div className="d-flex gap10">
-                                    <button onClick={handleConfirmDelete}>Confirm Delete</button>
-                                    <button onClick={handleCancelDelete}>Cancel</button>
-                                </div>
-                            </div>
+                    <div></div>
+                    <button onClick={() => setIsDeleting(true)} className="delete-account-button">Delete Account</button>
+                    {isDeleting && (
+                        <div className="delete-account-confirmation">
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password"/>
+                            <button onClick={handleDeleteAccount}>Confirm Delete</button>
+                            <button onClick={() => setIsDeleting(false)} className="cancel-button">Cancel</button>
                         </div>
                     )}
                 </div>
             </div>
         </div>
     );
-};
+}
 
 export default ProfilePage;

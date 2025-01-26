@@ -1,110 +1,115 @@
+// src/pages/PostsPage.js
 import React, { useState } from 'react';
-import useStore from '../store/main';
-import { useNavigate } from 'react-router-dom';
-import '../App.css';
+import useStore from '../store/main'; // Access the store
+import { Link } from 'react-router-dom';
 
-const PostsPage = () => {
-    const [newPostContent, setNewPostContent] = useState('');
-    const [newComment, setNewComment] = useState('');
-    const posts = useStore((state) => state.posts) || []; // Default to empty array if undefined
-    const users = useStore((state) => state.users) || [];
-    const currentUser = useStore((state) => state.currentUser);
-    const addPost = useStore((state) => state.addPost);
-    const addCommentToPost = useStore((state) => state.addCommentToPost);
-    const likePost = useStore((state) => state.likePost);
-    const removePost = useStore((state) => state.removePost);
-    const removeComment = useStore((state) => state.removeComment);
-    const navigate = useNavigate();
+function PostsPage() {
+    const { posts, currentUser, likePost, deletePost, addComment, deleteComment } = useStore(); // Get posts and likePost function from store
+    const [commentContent, setCommentContent] = useState('');
 
-    const handleCreatePost = () => {
-        if (!newPostContent) return;
-        const newPost = {
-            id: Date.now(),
-            content: newPostContent,
-            userId: currentUser.id,
-            comments: [],
-            likedBy: [],
-        };
-        addPost(newPost);
-        setNewPostContent('');
+    const handleLike = (post) => {
+        if (currentUser) {
+            likePost(post); // Toggle like status
+        }
+    };
+
+    const handleDelete = (post) => {
+        if (currentUser && currentUser.username === post.author) {
+            const confirmDelete = window.confirm("Are you sure you want to delete this post?");
+            if (confirmDelete) {
+                deletePost(post); // Call the deletePost function from the store to remove the post
+            }
+        }
     };
 
     const handleCommentSubmit = (postId) => {
-        if (!newComment) return;
-        const comment = {
-            id: Date.now(),
-            content: newComment,
-            userId: currentUser.id,
-        };
-        addCommentToPost(postId, comment);
-        setNewComment('');
+        if (commentContent) {
+            const newComment = {
+                id: Date.now(), // Unique ID based on timestamp
+                author: currentUser.username,
+                content: commentContent,
+                timestamp: new Date().toISOString()
+            };
+            addComment(postId, newComment);
+            setCommentContent(''); // Clear the comment input field
+        }
     };
 
-    const getPostCreatorUsername = (userId) => {
-        const user = users.find((user) => user.id === userId);
-        return user ? user.username : 'Unknown User';
-    };
-
-    const getCommentCreatorUsername = (userId) => {
-        const user = users.find((user) => user.id === userId);
-        return user ? user.username : 'Anonymous';
+    const handleDeleteComment = (postId, commentId) => {
+        if (currentUser) {
+            deleteComment(postId, commentId);
+        }
     };
 
     return (
-        <div className="posts-container">
-            <h2>Posts</h2>
+        <div className="posts-page">
+            <h2>All Posts</h2>
             {posts.length === 0 ? (
-                <p>No posts available</p>
+                <p className="no-posts">No posts available. Create a post!</p>
             ) : (
-                posts.map((post) => (
-                    <div key={post.id} className="post-card">
-                        <h3>{post.content}</h3>
-                        {post.imageUrl && <img src={post.imageUrl} alt="Post" />}
-                        <p><strong>Posted by:</strong> {getPostCreatorUsername(post.userId)}</p>
+                <div className="posts-list">
+                    {posts.map((post, index) => (
+                        <div key={index} className="post">
+                            <h3>{post.title}</h3>
+                            <p>{post.description}</p>
+                            {post.imageUrl && <img src={post.imageUrl} alt={post.title} style={{ width: '100%', height: 'auto' }} />}
+                            <p>{post.content}</p>
+                            <small>Posted by: <strong>{post.author}</strong> on {new Date(post.timestamp).toLocaleString()}</small>
 
-                        <button
-                            className="like-button"
-                            onClick={() => likePost(post.id)}
-                        >
-                            {post.likedBy && post.likedBy.includes(currentUser.id) ? 'Unlike' : 'Like'}
-                        </button>
-                        <span className="likes-count">{post.likedBy ? post.likedBy.length : 0} Likes</span>
+                            {/* Display like/unlike button and count */}
+                            <div className="like-section">
+                                <button onClick={() => handleLike(post)}>
+                                    {post.likes && post.likes.includes(currentUser?.username)
+                                        ? 'Unlike'
+                                        : 'Like'}
+                                </button>
+                                <p>{post.likes ? post.likes.length : 0} {post.likes && post.likes.length === 1 ? 'Like' : 'Likes'}</p>
+                            </div>
 
-                        <div className="comments-container">
-                            {post.comments.map((comment, index) => (
-                                <div key={comment.id} className="comment-card">
-                                    <p><strong>{getCommentCreatorUsername(comment.userId)}:</strong> {comment.content}</p>
-                                    {comment.userId === currentUser.id && (
-                                        <button
-                                            onClick={() => removeComment(post.id, index)}
-                                        >
-                                            Delete
-                                        </button>
+                            {/* Comment Section */}
+                            <div className="comments-section">
+                                <h4>Comments</h4>
+                                <div className="comments-list">
+                                    {post.comments && post.comments.length > 0 ? (
+                                        post.comments.map((comment) => (
+                                            <div key={comment.id} className="comment">
+                                                <p><strong>{comment.author}</strong>: {comment.content}</p>
+                                                <small>{new Date(comment.timestamp).toLocaleString()}</small>
+                                                {currentUser && currentUser.username === comment.author && (
+                                                    <button onClick={() => handleDeleteComment(post.timestamp, comment.id)}>Delete </button>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No comments yet. Be the first to comment!</p>
                                     )}
                                 </div>
-                            ))}
-                        </div>
 
-                        <div className="add-comment">
-                            <textarea
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Write a comment..."
-                            />
-                            <button onClick={() => handleCommentSubmit(post.id)}>Comment</button>
-                        </div>
+                                {currentUser ? (
+                                    <div className="comment-input">
+                                        <textarea
+                                            value={commentContent}
+                                            onChange={(e) => setCommentContent(e.target.value)}
+                                            placeholder="Add a comment"
+                                            rows="3"
+                                            cols="50"
+                                        />
+                                        <button onClick={() => handleCommentSubmit(post.timestamp)}>Submit </button>
+                                    </div>
+                                ) : (
+                                    <p>You must be logged in to comment.</p>
+                                )}
+                            </div>
 
-                        {post.userId === currentUser.id && (
-                            <button onClick={() => removePost(post.id)}>
-                                Delete Post
-                            </button>
-                        )}
-                    </div>
-                ))
+                            {currentUser && currentUser.username === post.author && (
+                                <button onClick={() => handleDelete(post)}>Delete Post</button>
+                            )}
+                        </div>
+                    ))}
+                </div>
             )}
-
         </div>
     );
-};
+}
 
 export default PostsPage;

@@ -1,81 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useStore from '../store/main';
-import { useNavigate } from 'react-router-dom';
+import '../App.css';
 
-const ConversationPage = () => {
-    const { currentUser, conversations, users } = useStore();
+function ConversationPage() {
+    const { users, currentUser, sendMessage, messages } = useStore();
     const [selectedUser, setSelectedUser] = useState(null);
-    const [message, setMessage] = useState('');
-    const navigate = useNavigate();
+    const [newMessage, setNewMessage] = useState('');
 
-    useEffect(() => {
-        const userId = window.location.pathname.split('/').pop();
-        const user = users.find((user) => user.id.toString() === userId);
-        setSelectedUser(user);
-    }, [users]);
+    const conversations = users.filter(user =>
+        messages.some(msg => (msg.sender === currentUser.username && msg.recipient === user.username) ||
+            (msg.sender === user.username && msg.recipient === currentUser.username))
+    );
+
+    const messagesForSelectedUser = selectedUser ? messages.filter(msg =>
+        (msg.sender === currentUser.username && msg.recipient === selectedUser.username) ||
+        (msg.sender === selectedUser.username && msg.recipient === currentUser.username)
+    ) : [];
 
     const handleSendMessage = () => {
-        if (message.trim()) {
-
-            useStore.getState().sendMessage(currentUser.id, selectedUser.id, message);
-            setMessage('');
+        if (newMessage.trim()) {
+            sendMessage(selectedUser, newMessage);
+            setNewMessage('');
         }
     };
 
     return (
-        <div style={{ display: 'flex' }}>
-            <div style={{ width: '250px', padding: '20px', borderRight: '1px solid #ddd' }}>
-                <h3>Users</h3>
-                <div>
-                    {Object.keys(conversations).map((userId) => {
-                        const user = users.find((u) => u.id.toString() === userId);
-                        return (
-                            <div
-                                key={userId}
-                                onClick={() => setSelectedUser(user)}
-                                style={{ padding: '10px', cursor: 'pointer', marginBottom: '10px', backgroundColor: selectedUser?.id === user.id ? '#eee' : '' }}
-                            >
-                                <h4>{user.username}</h4>
-                            </div>
-                        );
-                    })}
-                </div>
+        <div className="conversation-container">
+            <div className="user-list">
+                <h2>Conversations</h2>
+                {conversations.length === 0 ? (
+                    <p>No conversations yet.</p>
+                ) : (
+                    conversations.map((user) => (
+                        <div
+                            key={user.username}
+                            className="user-item"
+                            onClick={() => setSelectedUser(user)}
+                        >
+                            <p>{user.username}</p>
+                        </div>
+                    ))
+                )}
             </div>
 
-            <div style={{ flex: 1, padding: '20px' }}>
+            <div className="message-box">
                 {selectedUser ? (
                     <>
-                        <h3>Conversation with {selectedUser.username}</h3>
-                        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                            {(conversations[selectedUser.id] || []).map((msg, index) => (
-                                <div
-                                    key={index}
-                                    style={{
-                                        padding: '10px',
-                                        marginBottom: '10px',
-                                        backgroundColor: msg.senderId === currentUser.id ? '#d0f0c0' : '#f0f0f0',
-                                        textAlign: msg.senderId === currentUser.id ? 'right' : 'left',
-                                    }}
-                                >
-                                    <strong>{msg.senderId === currentUser.id ? 'You' : selectedUser.username}:</strong>
-                                    <p>{msg.text}</p>
-                                </div>
-                            ))}
+                        <h2>Chat with {selectedUser.username}</h2>
+                        <div className="messages">
+                            {Array.isArray(messagesForSelectedUser) && messagesForSelectedUser.length > 0 ? (
+                                messagesForSelectedUser.map((msg, index) => (
+                                    <div key={index} className={msg.sender === currentUser.username ? 'message-sent' : 'message-received'}>
+                                        <p><strong>{msg.sender}:</strong> {msg.message}</p>
+                                        <p className="timestamp">{new Date(msg.timestamp).toLocaleString()}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>No messages to show.</p>
+                            )}
                         </div>
                         <textarea
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Type your message..."
-                            style={{ width: '100%', height: '100px', padding: '10px' }}
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Write your message..."
                         />
-                        <button onClick={handleSendMessage} style={{ marginTop: '10px' }}>Send</button>
+                        <button className="buttonSend" onClick={handleSendMessage}>Send</button>
                     </>
                 ) : (
-                    <p>Select a user to start a conversation</p>
+                    <p>Select a user to start chatting.</p>
                 )}
             </div>
         </div>
     );
-};
+}
 
 export default ConversationPage;

@@ -1,44 +1,58 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useStore from '../store/main';
+import useStore from '../store/main'; // Import the store
+import '../App.css';
 
-const LoginPage = () => {
+function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const users = useStore((state) => state.users);
-    const setCurrentUser = useStore((state) => state.setCurrentUser);
+    const { login, isLoggedIn, users } = useStore();
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
-        const user = users.find((user) => user.username === username && user.password === password);
-        if (user) {
-            setCurrentUser(user);
-            navigate('/profile');
+
+        const existingUser = users.find(user => user.username === username);
+
+        if (!existingUser) {
+
+            setError('User does not exist. Please register.');
+        } else if (existingUser.password !== password) {
+
+            setError('Incorrect password. Please try again.');
         } else {
-            setError('Invalid username or password');
+
+            login(username, password);
+
+
+            navigate('/profile');
         }
     };
 
     return (
-        <div className="d-flex direction-col a-center" >
-            <h2>Login</h2>
-            <form onSubmit={handleLogin}>
-                <div className="d-flex direction-col">
-                    <label>Username:</label>
-                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-                </div>
-                <div className="d-flex direction-col">
-                    <label>Password:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                </div>
-                {error && <p style={{ color: 'red' }}>{error}</p>}
-                <button className="registerButton" type="submit">Login</button>
-            </form>
+        <div className="login-container">
+            <h2 className="login-title">Login</h2>
+            <div className="login-form">
+                <input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+                <button onClick={handleSubmit}>Login</button>
+            </div>
+            {error && <div className="error-message">{error}</div>}
+
         </div>
     );
-};
+}
 
 export default LoginPage;
