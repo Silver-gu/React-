@@ -1,15 +1,14 @@
-// src/pages/PostsPage.js
+
 import React, { useState } from 'react';
-import useStore from '../store/main'; // Access the store
-import { Link } from 'react-router-dom';
+import useStore from '../store/main';
 
 function PostsPage() {
-    const { posts, currentUser, likePost, deletePost, addComment, deleteComment } = useStore(); // Get posts and likePost function from store
+    const { posts, currentUser, likePost, deletePost, addComment, deleteComment } = useStore();
     const [commentContent, setCommentContent] = useState('');
 
     const handleLike = (post) => {
         if (currentUser) {
-            likePost(post); // Toggle like status
+            likePost(post);
         }
     };
 
@@ -17,7 +16,7 @@ function PostsPage() {
         if (currentUser && currentUser.username === post.author) {
             const confirmDelete = window.confirm("Are you sure you want to delete this post?");
             if (confirmDelete) {
-                deletePost(post); // Call the deletePost function from the store to remove the post
+                deletePost(post);
             }
         }
     };
@@ -25,13 +24,13 @@ function PostsPage() {
     const handleCommentSubmit = (postId) => {
         if (commentContent) {
             const newComment = {
-                id: Date.now(), // Unique ID based on timestamp
+                id: Date.now(),
                 author: currentUser.username,
                 content: commentContent,
                 timestamp: new Date().toISOString()
             };
             addComment(postId, newComment);
-            setCommentContent(''); // Clear the comment input field
+            setCommentContent('');
         }
     };
 
@@ -56,7 +55,7 @@ function PostsPage() {
                             <p>{post.content}</p>
                             <small>Posted by: <strong>{post.author}</strong> on {new Date(post.timestamp).toLocaleString()}</small>
 
-                            {/* Display like/unlike button and count */}
+
                             <div className="like-section">
                                 <button onClick={() => handleLike(post)}>
                                     {post.likes && post.likes.includes(currentUser?.username)
@@ -66,7 +65,7 @@ function PostsPage() {
                                 <p>{post.likes ? post.likes.length : 0} {post.likes && post.likes.length === 1 ? 'Like' : 'Likes'}</p>
                             </div>
 
-                            {/* Comment Section */}
+
                             <div className="comments-section">
                                 <h4>Comments</h4>
                                 <div className="comments-list">
@@ -87,13 +86,7 @@ function PostsPage() {
 
                                 {currentUser ? (
                                     <div className="comment-input">
-                                        <textarea
-                                            value={commentContent}
-                                            onChange={(e) => setCommentContent(e.target.value)}
-                                            placeholder="Add a comment"
-                                            rows="3"
-                                            cols="50"
-                                        />
+                                        <textarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} placeholder="Add a comment" rows="3" cols="50"/>
                                         <button onClick={() => handleCommentSubmit(post.timestamp)}>Submit </button>
                                     </div>
                                 ) : (

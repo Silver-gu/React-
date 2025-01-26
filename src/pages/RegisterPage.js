@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useStore from '../store/main'; // Import the store
+import useStore from '../store/main';
 
 function RegisterPage() {
     const [username, setUsername] = useState('');

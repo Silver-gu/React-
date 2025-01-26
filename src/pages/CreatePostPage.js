@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import useStore from '../store/main'; // Access the store
+import useStore from '../store/main';
 import { useNavigate } from 'react-router-dom';
 
 function CreatePostPage() {
