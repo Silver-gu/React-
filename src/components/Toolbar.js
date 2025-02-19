@@ -1,39 +1,23 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import useStore from '../store/main';
-import '../App.css';
+import {Link} from "react-router-dom";
+import mainStore from "../store/main";
 
-function Toolbar() {
-    const { currentUser, logout } = useStore();
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/');
-    };
+const Toolbar = () => {
+    const {user} = mainStore(state => state)
 
     return (
-        <div className="toolbar">
-            <h3>My App</h3>
-            <div className="toolbar-links d-flex a-center">
-                {currentUser ? (
-                    <>
-                        <Link to="/profile">Profile</Link>
-                        <Link to="/users">Users</Link>
-                        <Link to="/posts">Posts</Link>
-                        <Link to="/create-post">Create Post</Link>
-                        <Link to="/conversation">Messages</Link>
-                        <button onClick={handleLogout}>Logout</button>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login">Login</Link>
-                        <Link to="/register">Register</Link>
-                    </>
-                )}
+        <div className="d-flex justify-content-between p-3 mb-5 toolbarbox">
+            <div className="d-flex a-center gap-2">
+                <Link className="toolbarLink" to="profile">Profile</Link>
+                <Link className="toolbarLink" to="/users">Users</Link>
+                <Link className="toolbarLink" to="/favorite">Favorite</Link>
+                <Link className="toolbarLink" to="/subscribers">Subscribers</Link>
+            </div>
+            <div className="loginUser">
+                Logged in as: <b>{user.username}</b>
             </div>
         </div>
     );
-}
+};
 
 export default Toolbar;
